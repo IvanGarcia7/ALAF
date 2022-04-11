@@ -26,14 +26,14 @@ The Offline part is composed of the SR application, in addition to the generatio
 
 After downloading and loading the necessary models, we want to improve the detections on a given image as input, e.g. the Figure below:
 
-![INPUT IMAGE](https://github.com/IvanGarcia7/ALAF/blob/main/Images/RAW.jpg?raw=true)
+![INPUT IMAGE](https://github.com/IvanGarcia7/ALAF/blob/main/Images/RAWS1.jpg?raw=true)
 
 
 After performing the successive detections, an output image will be generated. Using the values determined by the function, an XML file is subsequently generated, which is necessary to generate the Tensorflow 2 training records.
 
 ## Output:
 
-![OUTPUT IMAGE](https://github.com/IvanGarcia7/ALAF/blob/main/Images/OURS.jpg?raw=true)
+![OUTPUT IMAGE](https://github.com/IvanGarcia7/ALAF/blob/main/Images/OURSS1.jpg?raw=true)
 
 
 The scripts mentioned in the Fine-Tuning phase can be found in the following path:
