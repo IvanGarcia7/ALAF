@@ -71,7 +71,7 @@ A Docker image is included in order to install all the libraries required to run
 
 # Information:
 
-If you use some of the sequences established in this repository, don't forget to cite both the original datasets as well as the following articles:
+If you use some of the sequences established in this repository or our proposal, don't forget to cite both the original datasets as well as the following articles:
 
 *Previous Proposal:
 
