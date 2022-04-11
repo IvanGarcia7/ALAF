@@ -69,6 +69,36 @@ A Docker image is included in order to install all the libraries required to run
 
 * https://github.com/IvanGarcia7/ALAF/blob/main/Dockerfile
 
+# Information:
+
+If you use some of the sequences established in this repository, don't forget to cite both the original datasets as well as the following articles:
+
+*Previous Proposal:
+
+```
+@article{GarcaAguilar2021,
+  doi = {10.1111/exsy.12930},
+  url = {https://doi.org/10.1111/exsy.12930},
+  year = {2021},
+  month = dec,
+  publisher = {Wiley},
+  volume = {39},
+  number = {2},
+  author = {Iv{\'{a}}n Garc{\'{\i}}a-Aguilar and Rafael Marcos Luque-Baena and Ezequiel L{\'{o}}pez-Rubio},
+  title = {Improved detection of small objects in road network sequences using
+		            {CNN}
+		            and super resolution},
+  journal = {Expert Systems}
+}
+```
+
+*This proposal:
+
+```
+Not Available Yet
+```
+
+
 # REQUIREMENTS:
 
 * Tensorflow 2
