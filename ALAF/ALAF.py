@@ -1,3 +1,27 @@
+import json
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import pathlib
+import pycocotools
+import pylab
+import re
+import shutil
+import tensorflow as tf
+import time
+
+from cv2 import dnn_superres
+from dict2xml import dict2xml
+from object_detection.utils import label_map_util
+from object_detection.utils import config_util
+from object_detection.utils import visualization_utils as viz_utils
+from PIL import Image
+
+from Cluster import *
+from Optimizer import *
+from Utils import *
+
 def filter_data(unfiltered_data, selected_classes, min_score):
 
     boxes, clases, scores = unfiltered_data
@@ -22,7 +46,7 @@ def filter_data(unfiltered_data, selected_classes, min_score):
     return [true_boxes, true_clases, true_scores]
 
 
-def make_simple_inference_SRSR(frame_path,x1,y1,width,height,Triples_Translated,selected_classes,factor,min_score):
+def make_simple_inference_SRSR(detect_fn,category_index,frame_path,x1,y1,width,height,Triples_Translated,selected_classes,factor,min_score):
   image_np = load_image_into_numpy_array(frame_path)
   input_tensor = tf.convert_to_tensor(image_np)
   input_tensor = input_tensor[tf.newaxis, ...]
@@ -67,12 +91,15 @@ def make_simple_inference_SRSR(frame_path,x1,y1,width,height,Triples_Translated,
   Triples_Translated.append((np.array(Triple_Box),np.array(Triple_Class),np.array(Triple_Score)))
   
 
-def make_inference_SRSR(image_path,image_name,image_save,selected_classes,factor,FACTOR2,min_score,MODEL_SR_DIR):
+def make_inference_SRSR(detect_fn,category_index,image_path,image_name,image_save,selected_classes,factor,FACTOR2,min_score,MODEL_SR_DIR):
   
   selected_frame = np.array(Image.open(image_path))
   image_np = load_image_into_numpy_array(image_path)
   input_tensor = tf.convert_to_tensor(image_np)
   input_tensor = input_tensor[tf.newaxis, ...]
+
+  number_files_raw = 0
+  number_files_ours = 0
 
   detections = detect_fn(input_tensor)
   num_detections = int(detections.pop('num_detections'))
@@ -96,6 +123,8 @@ def make_inference_SRSR(image_path,image_name,image_save,selected_classes,factor
 
   Triple_List = []
   Nodes_Filter = []
+
+  number_files_raw = len(true_boxes)
 
   for i in range(len(true_boxes)):
       box_detected = true_boxes[i]
@@ -176,6 +205,7 @@ def make_inference_SRSR(image_path,image_name,image_save,selected_classes,factor
   new_width = width*factor*2
   new_height = height*factor*2 
 
+  number_files_ours_aux = 0
   for ix in optimized_cliques_list:
 
     coordinate_selected_list = []
@@ -184,6 +214,7 @@ def make_inference_SRSR(image_path,image_name,image_save,selected_classes,factor
      coordinate_selected_list.append(coordenadaxyc)
     
     if len(coordinate_selected_list) > 0:
+        number_files_ours_aux = number_files_ours_aux + 1
         centroide = centroid1(coordinate_selected_list)
         a1 = centroide[0]
         a2 = centroide[1]
@@ -194,7 +225,7 @@ def make_inference_SRSR(image_path,image_name,image_save,selected_classes,factor
         nombre_sr_332 = image_save+"/AUX/{}.jpg".format(str(ix))
         im_crop_outside.save(nombre_sr_332, quality=100)
 
-        make_simple_inference_SRSR(nombre_sr_332,a1-RECORTEX,a2-RECORTEY,new_width,new_height,Triple_List,selected_classes,factor*2,min_score)
+        make_simple_inference_SRSR(detect_fn,category_index,nombre_sr_332,a1-RECORTEX,a2-RECORTEY,new_width,new_height,Triple_List,selected_classes,factor*2,min_score)
 
   PATH_SR_V2  = MODEL_SR_DIR+'SR_Frame.png'
   PATH_RAW_V2 = image_path
@@ -208,9 +239,10 @@ def make_inference_SRSR(image_path,image_name,image_save,selected_classes,factor
         im_crop_outside.save(nombre_sr_332, quality=100)
         a1e = point[0]
         a2e = point[1]
-        make_simple_inference_SRSR(nombre_sr_332,a1e,a2e,new_width,new_height,Triple_List,selected_classes,factor*2,min_score)
+        make_simple_inference_SRSR(detect_fn,category_index,nombre_sr_332,a1e,a2e,new_width,new_height,Triple_List,selected_classes,factor*2,min_score)
 
-    
+  number_files_ours = number_files_ours_aux + 5
+
   Final_List_Boxes = []
   Final_List_Clases = []
   Final_List_Scores = []
@@ -321,11 +353,12 @@ def make_inference_SRSR(image_path,image_name,image_save,selected_classes,factor
   output.append(width)
   output.append(height)
   output.append(clusted_cliques)
-  
+  output.append(number_files_raw)
+  output.append(number_files_ours)
   return output
 
 
-def make_inference_SRSRRAW(image_path,image_name,image_save,selected_classes, min_score):
+def make_inference_SRSRRAW(detect_fn,category_index,image_path,image_name,image_save,selected_classes, min_score):
 
   image_detections = np.array(Image.open(image_path))
   image_np = load_image_into_numpy_array(image_path)
@@ -410,4 +443,4 @@ def make_inference_SRSRRAW(image_path,image_name,image_save,selected_classes, mi
   output.append(width)
   output.append(height)
     
-  return salida
+  return output

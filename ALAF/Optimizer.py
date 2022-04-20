@@ -1,3 +1,5 @@
+import numpy as np
+
 class Node(object):
     
     def __init__(self, name, coordenadas, coordenadas2,puntos):

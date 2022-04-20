@@ -1,3 +1,5 @@
+import numpy as np
+
 def rectangle_area(sq):
     """
     Function to calculate the area of a rectangle. Square is assomed to be given as a list: [min_height, min_width, max_height, max_width]
