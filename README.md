@@ -54,13 +54,13 @@ To evaluate the mAP(Mean Average Precision) of the model, a function is included
 You can execute our proposal as indicated in the demo by executing the following function:
 
 ``` 
-make_inference_SRSR(‘path_image_to_infer’, ‘image_name’, ‘path_to_save_images‘, classes_coco_to_detect, 0.5, 0, min_score_to_detect, path_SR_model)
+make_inference_SRSR(model_loaded, category_index, ‘path_image_to_infer’, ‘image_name’, ‘path_to_save_images‘, classes_coco_to_detect, 0.5, 0, min_score_to_detect, path_SR_model)
 ```
 
 Example:
 
 ```
-make_inference_SR(‘/Data/small_objects/Evaluation/1.jpg’, ‘1_output.jpg’, ‘/Data/small_objects/SR_OUTPUT/‘, [3], 0.5, 0, 0.35, ‘/Data/small_objects/SR_MODEL/‘)
+make_inference_SR(detect_fn, category_index, ‘/Data/small_objects/Evaluation/1.jpg’, ‘1_output.jpg’, ‘/Data/small_objects/SR_OUTPUT/‘, [3], 0.5, 0, 0.35, ‘/Data/small_objects/SR_MODEL/‘)
 ```
 
 # Docker Image:
