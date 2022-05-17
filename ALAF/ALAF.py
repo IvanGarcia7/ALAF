@@ -19,7 +19,6 @@ from object_detection.utils import visualization_utils as viz_utils
 from PIL import Image
 
 from Cluster import *
-from Optimizer import *
 from Utils import *
 
 def filter_data(unfiltered_data, selected_classes, min_score):
@@ -46,7 +45,7 @@ def filter_data(unfiltered_data, selected_classes, min_score):
     return [true_boxes, true_clases, true_scores]
 
 
-def make_simple_inference_SRSR(detect_fn,category_index,frame_path,x1,y1,width,height,Triples_Translated,selected_classes,factor,min_score):
+def make_simple_inference_SRSR(detect_fn,category_index,frame_path,x1,y1,width,height,Triples_Translated,selected_classes,min_score):
   image_np = load_image_into_numpy_array(frame_path)
   input_tensor = tf.convert_to_tensor(image_np)
   input_tensor = input_tensor[tf.newaxis, ...]
@@ -79,10 +78,10 @@ def make_simple_inference_SRSR(detect_fn,category_index,frame_path,x1,y1,width,h
       xmax11 = ((((box_detected[3]*width))+x1)/2)
 
       coordenadas_good = []    
-      coordenadas_good.append((ymin11/height)*factor)
-      coordenadas_good.append((xmin11/width)*factor)
-      coordenadas_good.append((ymax11/height)*factor)
-      coordenadas_good.append((xmax11/width)*factor)
+      coordenadas_good.append((ymin11/height))
+      coordenadas_good.append((xmin11/width))
+      coordenadas_good.append((ymax11/height))
+      coordenadas_good.append((xmax11/width))
           
       Triple_Box.append(coordenadas_good)
       Triple_Class.append(true_clases[i])
@@ -91,7 +90,7 @@ def make_simple_inference_SRSR(detect_fn,category_index,frame_path,x1,y1,width,h
   Triples_Translated.append((np.array(Triple_Box),np.array(Triple_Class),np.array(Triple_Score)))
   
 
-def make_inference_SRSR(detect_fn,category_index,image_path,image_name,image_save,selected_classes,factor,FACTOR2,min_score,MODEL_SR_DIR):
+def make_inference_SRSR(detect_fn,category_index,image_path,image_name,image_save,selected_classes,min_score,MODEL_SR_DIR):
   
   selected_frame = np.array(Image.open(image_path))
   image_np = load_image_into_numpy_array(image_path)
@@ -125,8 +124,14 @@ def make_inference_SRSR(detect_fn,category_index,image_path,image_name,image_sav
   Nodes_Filter = []
 
   number_files_raw = len(true_boxes)
+  
+  new_width = width*2
+  new_height = height*2 
+
+  number_files_ours_aux = 0
 
   for i in range(len(true_boxes)):
+      number_files_ours_aux = number_files_ours_aux + 1
       box_detected = true_boxes[i]
       
       ymin = int(box_detected[0]*height*2)
@@ -144,88 +149,17 @@ def make_inference_SRSR(detect_fn,category_index,image_path,image_name,image_sav
       coordenadas_good.append(xmin11)
       coordenadas_good.append(ymax11)
       coordenadas_good.append(xmax11)
-    
-      coordenada1_y = ((box_detected[0]+box_detected[2])/2)*height
-      coordenada2_x = ((box_detected[1]+box_detected[3])/2)*width
-    
-      Nodes_Filter.append(Node(str(i),(coordenada2_x,coordenada1_y),(int((xmin+xmax)/2),int((ymin+ymax)/2)),(xmin11*width,xmax11*width,ymin11*height,ymax11*height)))
-      
-  new_width = width*FACTOR2
-  new_height = height*FACTOR2
-  adj_matrix2 = []
-  adj_matrix_SUPLE = []
-  all_nodes = []
 
-  for i in range(len(Nodes_Filter)):
+      a1 = (xmin+xmax)//2
+      a2 = (ymin+ymax)//2
+      RECORTEX = int(width/2)
+      RECORTEY = int(height/2)
 
-     adj_matrix_SUPLE = []
-     First_Node_Selected = Nodes_Filter[i]
-     lista_vecinos = []
+      im_crop_outside = im.crop((a1-RECORTEX, a2-RECORTEY, a1+RECORTEX, a2+RECORTEY))
+      nombre_sr_332 = image_save+"/AUX/{}.jpg".format(str(number_files_ours_aux))
+      im_crop_outside.save(nombre_sr_332, quality=100)
 
-     a1 = First_Node_Selected.coordenadas[0]
-     a2 = First_Node_Selected.coordenadas[1]
-
-     RECORTEX = int(new_width/2)
-     RECORTEY = int(new_height/2)
-    
-     xmin = a1-RECORTEX
-     ymin = a2-RECORTEY
-     xmax = a1+RECORTEX
-     ymax = a2+RECORTEY
-      
-     for o in range(len(Nodes_Filter)):
-       if i != o:
-         Second_Node_Selected = Nodes_Filter[o]
-         
-         xminb = Second_Node_Selected.x1x2y1y2[0]
-         xmaxb = Second_Node_Selected.x1x2y1y2[1]
-         yminb = Second_Node_Selected.x1x2y1y2[2]
-         ymaxb = Second_Node_Selected.x1x2y1y2[3]
-        
-         if (xminb >= xmin and xmaxb <= xmax and yminb >= ymin and ymaxb <= ymax):
-           Nodes_Filter[i].neighbors.append(Nodes_Filter[o]) 
-           adj_matrix_SUPLE.append(1)
-         else:
-            adj_matrix_SUPLE.append(0)
-       else:
-        adj_matrix_SUPLE.append(0)
-     adj_matrix2.append(adj_matrix_SUPLE)          
-  
-  for i in range(len(Nodes_Filter)):
-    all_nodes.append(Nodes_Filter[i])
-    
-  total_cliques = []
-  NumNodes = {
-    i: set(num for num, j in enumerate(row) if j)
-    for i, row in enumerate(adj_matrix2)
-  }
-  P2 = NumNodes.keys()
-  
-  optimized_cliques_list = list(Optimizer_V2(bron_kerbosch(adj_matrix2, pivot=True),3))
-  new_width = width*factor*2
-  new_height = height*factor*2 
-
-  number_files_ours_aux = 0
-  for ix in optimized_cliques_list:
-
-    coordinate_selected_list = []
-    for ab in ix:
-     coordenadaxyc =all_nodes[ab].coordenadas2
-     coordinate_selected_list.append(coordenadaxyc)
-    
-    if len(coordinate_selected_list) > 0:
-        number_files_ours_aux = number_files_ours_aux + 1
-        centroide = centroid1(coordinate_selected_list)
-        a1 = centroide[0]
-        a2 = centroide[1]
-        RECORTEX = int(new_width/2)
-        RECORTEY = int(new_height/2)
-        
-        im_crop_outside = im.crop((a1-RECORTEX, a2-RECORTEY, a1+RECORTEX, a2+RECORTEY))
-        nombre_sr_332 = image_save+"/AUX/{}.jpg".format(str(ix))
-        im_crop_outside.save(nombre_sr_332, quality=100)
-
-        make_simple_inference_SRSR(detect_fn,category_index,nombre_sr_332,a1-RECORTEX,a2-RECORTEY,new_width,new_height,Triple_List,selected_classes,factor*2,min_score)
+      make_simple_inference_SRSR(detect_fn,category_index,nombre_sr_332,a1-RECORTEX,a2-RECORTEY,width,height,Triple_List,selected_classes,min_score)
 
   PATH_SR_V2  = MODEL_SR_DIR+'SR_Frame.png'
   PATH_RAW_V2 = image_path
@@ -239,7 +173,7 @@ def make_inference_SRSR(detect_fn,category_index,image_path,image_name,image_sav
         im_crop_outside.save(nombre_sr_332, quality=100)
         a1e = point[0]
         a2e = point[1]
-        make_simple_inference_SRSR(detect_fn,category_index,nombre_sr_332,a1e,a2e,new_width,new_height,Triple_List,selected_classes,factor*2,min_score)
+        make_simple_inference_SRSR(detect_fn,category_index,nombre_sr_332,a1e,a2e,width,height,Triple_List,selected_classes,min_score)
 
   number_files_ours = number_files_ours_aux + 5
 
